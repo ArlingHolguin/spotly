@@ -58,7 +58,7 @@ export default function Welcome({
                                 )}
                             </nav>
                         </header> */}
-                        <div className='text-center font-extrabold text-3xl'>Spotly - Technical Challenge Spot2 (IC FullStack)</div>
+                        <div className='text-center font-extrabold text-3xl'>Spotly2 - Technical Challenge Spot2 (IC FullStack)</div>
                         <div className='flex justify-center items-center mt-10 '>
                             <a href='/api/documentation' className='bg-red-700 hover:bg-red-500 text-white px-6 py-1 rounded-lg flex items-center justify-center'>Documentación</a>
                         </div>
