@@ -1,0 +1,63 @@
+name: Deploy Laravel with Inertia.js to AWS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Clonar el repositorio
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # 2. Configurar PHP, Composer y Node.js
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          extensions: mbstring, xml, bcmath, curl, zip
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18 # Asegúrate de usar la misma versión que tu proyecto
+
+      # 3. Instalar dependencias PHP y Node.js
+      - name: Install Composer Dependencies
+        run: composer install --no-dev --prefer-dist --optimize-autoloader
+
+      - name: Install Node.js Dependencies
+        run: npm ci
+
+      # 4. Construir assets frontend
+      - name: Build Frontend
+        run: npm run build
+
+      # 5. Subir archivos al servidor
+      - name: Deploy to Server
+        env:
+          HOST: ${{ secrets.SERVER_HOST }}
+          USER: ${{ secrets.SERVER_USER }}
+          KEY: ${{ secrets.SERVER_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H $HOST >> ~/.ssh/known_hosts
+          ssh $USER@$HOST "
+            cd /var/www/laravel &&
+            git pull origin main &&
+            composer install --no-dev --prefer-dist --optimize-autoloader &&
+            npm ci &&
+            npm run build &&
+            php artisan migrate --force &&
+            php artisan cache:clear &&
+            php artisan config:clear &&
+            php artisan route:clear &&
+            php artisan view:clear
+          "
