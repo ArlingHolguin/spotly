@@ -9,6 +9,7 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        api: __DIR__.'/../routes/api.php' 
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
@@ -16,8 +17,16 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        //api sanctum
+        $middleware->api(prepend: [
+            // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            \Illuminate\Routing\Middleware\ThrottleRequests::class,
+            // \Illuminate\Auth\Middleware\Authenticate::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ]);
     })
+
+    
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();
