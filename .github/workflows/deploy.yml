@@ -50,7 +50,7 @@ jobs:
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
         run: |
-          php artisan test --verbose
+          php artisan test
 
       # Verificar que las pruebas pasen (detener pipeline si fallan)
       - name: Ensure Tests Passed
