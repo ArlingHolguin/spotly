@@ -101,7 +101,9 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $HOST >> ~/.ssh/known_hosts
           ssh $USER@$HOST "
-            cd /var/www/laravel &&
+          sudo mkdir -p /var/www/laravel &&
+          sudo chown -R $USER:$USER /var/www/laravel &&
+          sudo chmod -R 755 /var/www/laravel &&
             git pull origin main &&
             composer install --no-dev --prefer-dist --optimize-autoloader &&
             npm ci &&
