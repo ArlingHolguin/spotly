@@ -14,8 +14,85 @@ class UrlController extends Controller
 {
     use ShortCodeGenerator;
     use TokenValidator;
+
+    // Doc para sagwr 
     /**
-     * Display a listing of the resource.
+     * @OA\PathItem(
+     * @OA\Info(
+     *             title="Api Rest - Shortener", 
+     *             version="1.0",
+     *             description="Listado de urls api Url"
+     * )
+     *
+     * @OA\Server(url="http://spotly.test")
+     * description="Servidor local"
+     */
+
+    /**
+     * Listado de las ultimas urls acortadas
+     * @OA\Get (
+     *     path="/api/v1/urls",
+     *     tags={"Urls"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 type="array",
+     *                 property="rows",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(
+     *                         property="id",
+     *                         type="number",
+     *                         example="12"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="user_id",
+     *                         type="number",
+     *                         example="1"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="original_url",
+     *                         type="string",
+     *                         example="https://example.com/"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="short_code",
+     *                         type="string",
+     *                         example="short_code"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="is_active",
+     *                         type="number",
+     *                         example="1"
+     *                     ),
+     *                      @OA\Property(
+     *                         property="clicks",
+     *                         type="number",
+     *                         example="0"
+     *                     ),
+     *                          @OA\Property(
+     *                         property="expires_at",
+     *                         type="string",
+     *                         example="2024-12-24 11:20:19"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="created_at",
+     *                         type="string",
+     *                         example="2023-02-23T00:09:16.000000Z"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="updated_at",
+     *                         type="string",
+     *                         example="2023-02-23T12:33:45.000000Z"
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     * )
      */
 
     public function index(Request $request)
