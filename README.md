@@ -113,6 +113,174 @@ php artisan migrate:fresh --seed
 Con esta guía, deberías tener tu proyecto listo para ejecutarse localmente. Si encuentras algún error o necesitas más ayuda, ¡no dudes en contactarme! 😊
 
 
+
+
+# Spotly - Despliegue en AWS con Apache y GitHub Actions
+
+Este documento explica cómo configurar un servidor Apache en AWS para ejecutar el proyecto Laravel y desplegar automáticamente usando GitHub Actions.
+
+---
+
+## Pasos para Configuración en AWS
+
+### 1. Crear una Instancia EC2 en AWS
+1. Accede a la consola de AWS y selecciona **EC2**.
+2. Crea una nueva instancia con las siguientes especificaciones:
+   - **AMI:** Ubuntu 20.04 o Amazon Linux 2.
+   - **Tipo de instancia:** t2.micro (o según tus necesidades).
+   - **Grupo de seguridad:** Asegúrate de abrir los puertos:
+     - **22** (para SSH).
+     - **80** (para HTTP).
+3. Descarga la clave privada (`.pem`) que será usada para conectarte al servidor.
+
+---
+
+### 2. Conectarse a la Instancia desde Git Bash
+1. Abre Git Bash en tu máquina local.
+2. Conéctate al servidor usando el siguiente comando:
+   ```bash
+   ssh -i "C:/Users/arlin/Downloads/sshpot.pem" ubuntu@ec2-3-135-244-31.us-east-2.compute.amazonaws.com
+   ```
+
+3. Actualiza los paquetes del sistema:
+   ```bash
+   sudo apt update
+   sudo apt upgrade -y
+   ```
+
+---
+
+### 3. Instalar Dependencias
+1. **Instalar Apache:**
+   ```bash
+   sudo apt install apache2 -y
+   sudo systemctl enable apache2
+   sudo systemctl start apache2
+   ```
+
+2. **Instalar PHP y módulos necesarios:**
+   ```bash
+   sudo apt install php8.2 libapache2-mod-php php-mysql php-mbstring php-xml php-bcmath unzip curl git composer -y
+   ```
+
+3. **Instalar MySQL:**
+   ```bash
+   sudo apt install mysql-server -y
+   sudo systemctl start mysql
+   sudo mysql_secure_installation
+   ```
+
+---
+
+### 4. Configurar Apache para Laravel
+1. **Crear un Virtual Host para el proyecto:**
+   Abre o crea un archivo de configuración para el sitio:
+   ```bash
+   sudo nano /etc/apache2/sites-available/spotly.conf
+   ```
+
+   Agrega lo siguiente al archivo:
+   ```apache
+   <VirtualHost *:80>
+       ServerName ec2-3-135-244-31.us-east-2.compute.amazonaws.com
+       DocumentRoot /var/www/spotly/public
+
+       <Directory /var/www/spotly>
+           AllowOverride All
+           Require all granted
+       </Directory>
+
+       ErrorLog ${APACHE_LOG_DIR}/spotly_error.log
+       CustomLog ${APACHE_LOG_DIR}/spotly_access.log combined
+   </VirtualHost>
+   ```
+
+2. **Habilitar el sitio y el módulo `mod_rewrite`:**
+   ```bash
+   sudo a2ensite spotly
+   sudo a2enmod rewrite
+   sudo systemctl restart apache2
+   ```
+
+3. **Configurar permisos:**
+   ```bash
+   sudo chown -R www-data:www-data /var/www/spotly
+   sudo chmod -R 775 /var/www/spotly/storage /var/www/spotly/bootstrap/cache
+   ```
+
+---
+
+### 5. Configurar el Proyecto en el Servidor
+1. **Clonar el repositorio:**
+   ```bash
+   cd /var/www
+   sudo git clone https://github.com/ArlingHolguin/spotly.git
+   cd spotly
+   ```
+
+2. **Instalar dependencias con Composer:**
+   ```bash
+   sudo composer install
+   ```
+
+3. **Configurar el archivo `.env`:**
+   Copia el archivo `.env.example` y configúralo:
+   ```bash
+   cp .env.example .env
+   sudo nano .env
+   ```
+
+   Configura las credenciales de base de datos y otras configuraciones según sea necesario.
+
+4. **Migrar la base de datos:**
+   ```bash
+   php artisan migrate --seed
+   ```
+
+5. **Generar la clave de la aplicación:**
+   ```bash
+   php artisan key:generate
+   ```
+
+---
+
+## Pasos para Configurar GitHub Actions
+
+### 1. Crear un Fork del Proyecto
+1. Ve al repositorio original en GitHub.
+2. Haz clic en **Fork** para crear una copia en tu cuenta de GitHub.
+
+---
+
+### 2. Configurar Secretos en GitHub
+1. Ve a `Settings > Secrets and variables > Actions` en tu repositorio.
+2. Agrega los siguientes secretos:
+   - **`SERVER_HOST`**: Dirección pública de tu instancia EC2 (ejemplo: `ec2-3-135-244-31.us-east-2.compute.amazonaws.com`).
+   - **`SERVER_USER`**: Usuario SSH del servidor (normalmente `ubuntu`).
+   - **`SERVER_SSH_KEY`**: Contenido de la llave privada descargada (`sshpot.pem`).
+
+---
+
+### 3. Probar el Despliegue Automático
+1. Realiza algún cambio en el código del proyecto y haz un **push** al repositorio:
+   ```bash
+   git add .
+   git commit -m "Test automatic deploy"
+   git push origin main
+   ```
+
+2. Ve a la sección de **Actions** en tu repositorio para verificar que el pipeline se ejecuta correctamente.
+
+---
+
+### Si Todo Sale Bien
+El despliegue será automático en cada **push** a la rama `main`. Solo necesitas seguir desarrollando y el sistema actualizará el servidor en AWS automáticamente.
+
+---
+
+
+
+
 Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
 ## Code of Conduct
