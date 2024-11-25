@@ -1,44 +1,95 @@
-name: Deploy Laravel with Inertia.js to AWS
+name: CI/CD Pipeline for Laravel
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  deploy:
+  # 1. Job para ejecutar pruebas
+  tests:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Clonar el repositorio
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      # Configurar PHP
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
 
-      # 2. Configurar PHP, Composer y Node.js
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      # Clonar el repositorio
+      - uses: actions/checkout@v4
+
+      # Copiar el archivo .env
+      - name: Copy .env
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+
+      # Instalar dependencias PHP
+      - name: Install Composer Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      # Generar clave de la aplicación
+      - name: Generate Key
+        run: php artisan key:generate
+
+      # Establecer permisos de directorios
+      - name: Directory Permissions
+        run: chmod -R 777 storage bootstrap/cache
+
+      # Crear base de datos SQLite
+      - name: Create Database
+        run: |
+          mkdir -p database
+          touch database/database.sqlite
+
+      # Ejecutar pruebas con PHPUnit/Pest
+      - name: Run Tests
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+        run: |
+          php artisan test
+
+      # Verificar que las pruebas pasen (detener pipeline si fallan)
+      - name: Ensure Tests Passed
+        if: failure()
+        run: exit 1
+
+  # 2. Job para desplegar la aplicación
+  deploy:
+    needs: tests # Este paso depende del job "tests"
+    runs-on: ubuntu-latest
+
+    steps:
+      # Clonar el repositorio
+      - uses: actions/checkout@v3
+
+      # Configurar PHP
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
           extensions: mbstring, xml, bcmath, curl, zip
           coverage: none
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      # Configurar Node.js
+      - uses: actions/setup-node@v3
         with:
-          node-version: 18 # Asegúrate de usar la misma versión que tu proyecto
+          node-version: 18
 
-      # 3. Instalar dependencias PHP y Node.js
+      # Instalar dependencias PHP y Node.js
       - name: Install Composer Dependencies
         run: composer install --no-dev --prefer-dist --optimize-autoloader
 
       - name: Install Node.js Dependencies
         run: npm ci
 
-      # 4. Construir assets frontend
+      # Construir assets frontend
       - name: Build Frontend
         run: npm run build
 
-      # 5. Subir archivos al servidor
+      # Subir archivos al servidor
       - name: Deploy to Server
         env:
           HOST: ${{ secrets.SERVER_HOST }}
