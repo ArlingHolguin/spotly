@@ -89,10 +89,11 @@ jobs:
       - name: Build Frontend
         run: npm run build
 
-      # Subir archivos al servidor
+      
+     # Subir archivos al servidor
       - name: Deploy to Server
         env:
-          HOST: ${{ secrets.SERVER_HOST }}
+          HOST: ${{ secrets.SERVER_HOST }}          
           USER: ${{ secrets.SERVER_USER }}
           KEY: ${{ secrets.SERVER_SSH_KEY }}
         run: |
