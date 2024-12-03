@@ -1,3 +1,5 @@
+
+import Shortener from '@/Components/Shortener';
 import { PageProps } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 
@@ -17,7 +19,7 @@ export default function Welcome({
                     src="https://laravel.com/assets/img/welcome/background.svg"
                 />
                 <div className="relative flex min-h-screen flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
-                    <div className="w-full max-w-2xl px-6 lg:max-w-7xl">
+                    <div className="w-full max-w-2xl px-8 lg:max-w-7xl">
                         {/* <header className="grid grid-cols-2 items-center gap-2 py-10 lg:grid-cols-3">
                             <div className="flex lg:col-start-2 lg:justify-center">
                                 <svg
@@ -58,11 +60,11 @@ export default function Welcome({
                                 )}
                             </nav>
                         </header> */}
-                        <div className='text-center font-extrabold text-3xl'>Spotly - Technical Challenge Spot2 (IC FullStack)</div>
+                        <div className='mt-10 text-center font-extrabold text-3xl'>Spotly - Technical Challenge Spot2 (IC FullStack)</div>
                         <div className='flex justify-center items-center mt-10 '>
                             <a href='/api/documentation' className='bg-red-700 hover:bg-red-500 text-white px-6 py-1 rounded-lg flex items-center justify-center'>Documentación</a>
                         </div>
-                        
+                        <Shortener />
                             
                         <footer className="py-16 text-center text-sm text-black dark:text-white/70">
                             Built with

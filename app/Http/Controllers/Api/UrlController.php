@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -10,88 +11,60 @@ use App\Traits\TokenValidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
+/**
+ * @OA\Info(
+ *     title="Api Rest - Shortener",
+ *     version="1.0",
+ *     description="API para acortar URLs"
+ * )
+ * 
+ * @OA\Server(
+ *     url="http://spotly.test",
+ *     description="Servidor local"
+ * )
+ */
+
+
+
+
 class UrlController extends Controller
 {
     use ShortCodeGenerator;
     use TokenValidator;
 
-    // Doc para sagwr 
-    /**
-     * @OA\PathItem(
-     * @OA\Info(
-     *             title="Api Rest - Shortener", 
-     *             version="1.0",
-     *             description="Listado de urls api Url"
-     * )
-     *
-     * @OA\Server(url="http://spotly.test")
-     * description="Servidor local"
-     */
+
+
+
 
     /**
-     * Listado de las ultimas urls acortadas
-     * @OA\Get (
+     * Listado de las últimas URLs acortadas
+     * 
+     * @OA\Get(
      *     path="/api/v1/urls",
      *     tags={"Urls"},
+     *     summary="Obtener las últimas URLs acortadas",
      *     @OA\Response(
      *         response=200,
-     *         description="OK",
+     *         description="Lista de URLs",
      *         @OA\JsonContent(
      *             @OA\Property(
      *                 type="array",
-     *                 property="rows",
+     *                 property="data",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="number",
-     *                         example="12"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="user_id",
-     *                         type="number",
-     *                         example="1"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="original_url",
-     *                         type="string",
-     *                         example="https://example.com/"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="short_code",
-     *                         type="string",
-     *                         example="short_code"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="is_active",
-     *                         type="number",
-     *                         example="1"
-     *                     ),
-     *                      @OA\Property(
-     *                         property="clicks",
-     *                         type="number",
-     *                         example="0"
-     *                     ),
-     *                          @OA\Property(
-     *                         property="expires_at",
-     *                         type="string",
-     *                         example="2024-12-24 11:20:19"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="created_at",
-     *                         type="string",
-     *                         example="2023-02-23T00:09:16.000000Z"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="updated_at",
-     *                         type="string",
-     *                         example="2023-02-23T12:33:45.000000Z"
-     *                     )
+     *                     @OA\Property(property="id", type="integer", example=12),
+     *                     @OA\Property(property="user_id", type="integer", example=1),
+     *                     @OA\Property(property="original_url", type="string", example="https://example.com/"),
+     *                     @OA\Property(property="short_code", type="string", example="short_code"),
+     *                     @OA\Property(property="is_active", type="integer", example=1),
+     *                     @OA\Property(property="clicks", type="integer", example=0),
+     *                     @OA\Property(property="expires_at", type="string", format="date-time", example="2024-12-24 11:20:19"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2023-02-23T00:09:16.000000Z"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2023-02-23T12:33:45.000000Z")
      *                 )
      *             )
      *         )
      *     )
-     * )
      * )
      */
 
@@ -115,13 +88,37 @@ class UrlController extends Controller
         return response()->json(['data' => $urls], 200);
     }
 
-
+    
 
 
     /**
-     * Store a newly created resource in storage.
+     * Crear una nueva URL acortada
+     * 
+     * @OA\Post(
+     *     path="/api/v1/urls",
+     *     tags={"Urls"},
+     *     summary="Crear una URL acortada",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="original_url", type="string", example="https://example.com/")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="URL creada con éxito",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/Url")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Datos inválidos"
+     *     )
+     * )
      */
-    // Crear una nueva URL
+
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -150,10 +147,7 @@ class UrlController extends Controller
 
 
 
-    /**
-     * Display the specified resource.
-     */
-    // Mostrar una URL específica
+
     public function show($short_code)
     {
         // Buscar la URL por su código corto
@@ -204,9 +198,43 @@ class UrlController extends Controller
 
 
     /**
-     * Remove the specified resource from storage.
+     * Eliminar una URL acortada
+     * 
+     * @OA\Delete(
+     *     path="/api/v1/urls/{short_code}",
+     *     tags={"Urls"},
+     *     summary="Eliminar una URL acortada",
+     *     description="Permite eliminar una URL acortada. Solo el dueño de la URL o un administrador puede realizar esta acción.",
+     *     @OA\Parameter(
+     *         name="short_code",
+     *         in="path",
+     *         required=true,
+     *         description="El código corto de la URL a eliminar",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="URL eliminada con éxito",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="URL eliminada correctamente")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="No autorizado",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="No autorizado")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="URL no encontrada",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="URL no encontrada")
+     *         )
+     *     )
+     * )
      */
-
     public function destroy($short_code, Request $request)
     {
         $url = Url::where('short_code', $short_code)->firstOrFail();

@@ -1,0 +1,253 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Api Rest - Shortener",
+        "description": "API para acortar URLs",
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "http://spotly.test",
+            "description": "Servidor local"
+        }
+    ],
+    "paths": {
+        "/api/v1/urls": {
+            "get": {
+                "tags": [
+                    "Urls"
+                ],
+                "summary": "Obtener las últimas URLs acortadas",
+                "description": "Listado de las últimas URLs acortadas",
+                "operationId": "84cf272f0d1bb8b46492eeded2344db5",
+                "responses": {
+                    "200": {
+                        "description": "Lista de URLs",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 12
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "original_url": {
+                                                        "type": "string",
+                                                        "example": "https://example.com/"
+                                                    },
+                                                    "short_code": {
+                                                        "type": "string",
+                                                        "example": "short_code"
+                                                    },
+                                                    "is_active": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "clicks": {
+                                                        "type": "integer",
+                                                        "example": 0
+                                                    },
+                                                    "expires_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-12-24 11:20:19"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2023-02-23T00:09:16.000000Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2023-02-23T12:33:45.000000Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Urls"
+                ],
+                "summary": "Crear una URL acortada",
+                "description": "Crear una nueva URL acortada",
+                "operationId": "0c6619984a2975eab18c551cd92d8939",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "original_url": {
+                                        "type": "string",
+                                        "example": "https://example.com/"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "URL creada con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Url"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Datos inválidos"
+                    }
+                }
+            }
+        },
+        "/api/v1/urls/{short_code}": {
+            "delete": {
+                "tags": [
+                    "Urls"
+                ],
+                "summary": "Eliminar una URL acortada",
+                "description": "Permite eliminar una URL acortada. Solo el dueño de la URL o un administrador puede realizar esta acción.",
+                "operationId": "286a95f6a54d55c1d69953584a1c8cc5",
+                "parameters": [
+                    {
+                        "name": "short_code",
+                        "in": "path",
+                        "description": "El código corto de la URL a eliminar",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "URL eliminada con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "URL eliminada correctamente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "No autorizado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "URL no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "URL no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Url": {
+                "description": "Modelo de una URL acortada",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "original_url": {
+                        "type": "string",
+                        "example": "https://example.com"
+                    },
+                    "short_code": {
+                        "type": "string",
+                        "example": "abc123"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "clicks": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-11-25T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-11-25T12:00:00Z"
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-12-25T10:00:00Z"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Urls",
+            "description": "Urls"
+        }
+    ]
+}

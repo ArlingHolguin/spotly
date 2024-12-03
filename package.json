@@ -23,5 +23,9 @@
         "tailwindcss": "^3.2.1",
         "typescript": "^5.0.2",
         "vite": "^5.0"
+    },
+    "dependencies": {
+        "antd": "^5.22.2",
+        "cookies-next": "^5.0.2"
     }
 }
