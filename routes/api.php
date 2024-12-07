@@ -10,9 +10,9 @@ Route::middleware(['api'])->prefix('v1')->group(function () {
     Route::middleware(['throttle:20,1'])->group(function () {
         Route::post('/urls', [UrlController::class, 'store'])->name('api.urls.store');
     });
-    Route::get('/urls/{short_code}', [UrlController::class, 'show'])->name('api.urls.show'); 
-    Route::delete('/urls/{short_code}', [UrlController::class, 'destroy'])->name('api.urls.destroy'); 
-    
+
+    Route::delete('/urls/{short_code}', [UrlController::class, 'destroy'])->name('api.urls.destroy');   
+
 
     // Rutas protegidas (requieren autenticación)
     Route::middleware('auth:sanctum')->group(function () {
@@ -20,13 +20,17 @@ Route::middleware(['api'])->prefix('v1')->group(function () {
     });
 
 
-    Route::get('/test', function () {        
-        return response()->json(['message' => 'Hello World']);
-    });
+    
 });
 
 Route::middleware(['api'])->prefix('v1/auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('api.auth.register'); 
     Route::post('/login', [AuthController::class, 'login'])->name('api.auth.login'); 
 });
+
+Route::get('/test', function () {        
+    return response()->json(['message' => 'Hello World']);
+});
+
+
 

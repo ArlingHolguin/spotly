@@ -49,6 +49,10 @@ async function fetchAPI(url: string, params: any = {}, method: string = 'GET', c
                 console.log("Demasiadas solicitudes. Intente nuevamente en unos minutos.");          
                 
 
+            }else if(status === 400){
+                console.log("Error 400");
+                
+
             }
             const errorMsg = data.error || data.message || "Error desconocido";
             throw new Error(errorMsg);

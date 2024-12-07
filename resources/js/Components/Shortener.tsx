@@ -1,5 +1,5 @@
 
-import React, {useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Form, Input, message, Space, Table } from 'antd';
 import Service from '../services';
 import { useHookLocalStorage } from '../helpers/useHookLocalStorage';
@@ -16,6 +16,7 @@ const Shortener = () => {
     // Usa localStorage para guardar la última URL acortada
     const [shortenedUrl, setShortenedUrl] = useHookLocalStorage('shortenedUrl', null);
     const [urlList, setUrlList] = useHookLocalStorage('urlList', []);
+    const [click, setClick] = useState(false);
 
     const onFinish = async (values: { url: string }) => {
         try {
@@ -25,9 +26,10 @@ const Shortener = () => {
                 message.error('No puedes acortar URLs del mismo dominio.');
                 return;
             }
-            
+
             // Llamar al servicio para acortar la URL
             const response = await service.Shortener({ url: values.url });
+            // console.log(response.code);
 
             if (response) {
                 message.success('URL acortada exitosamente.');
@@ -43,13 +45,41 @@ const Shortener = () => {
         console.log('Error al enviar el formulario');
     };
 
+    const copyToClipboardFallback = (text: string) => {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            message.success('¡URL copiada al portapapeles!');
+        } catch (error) {
+            console.error('Error al copiar la URL:', error);
+            message.error('No se pudo copiar la URL.');
+        }
+        document.body.removeChild(textArea);
+    };
+
     const copyToClipboard = (shortCode: string) => {
         const fullUrl = `${window.location.origin}/${shortCode}`; // Construir la URL completa
-        navigator.clipboard.writeText(fullUrl).then(
-            () => message.success('¡URL copiada al portapapeles!'),
-            (err) => message.error('No se pudo copiar la URL.')
-        );
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(fullUrl).then(() => {
+                message.success('¡URL copiada al portapapeles!');
+            }).catch((error) => {
+                console.error('Error al copiar la URL:', error);
+                message.error('No se pudo copiar la URL.');
+            });
+        } else {
+            // Usar el método de respaldo
+            copyToClipboardFallback(fullUrl);
+        }
     };
+
+
+
+
+
 
     const fetchUrls = async () => {
         try {
@@ -75,10 +105,14 @@ const Shortener = () => {
         }
     };
 
+
+
     useEffect(() => {
         fetchUrls();
-    }, [shortenedUrl]);
 
+    }, [shortenedUrl, click]);
+
+    
 
     const columns = [
         {
@@ -87,20 +121,28 @@ const Shortener = () => {
             key: 'id',
         },
         {
+            title: 'Clicks',
+            dataIndex: 'clicks',
+            key: 'clicks',
+        },
+        {
             title: 'Short Code',
             dataIndex: 'short_code',
             key: 'short_code',
-            render: (_:any, record: any) => (
-                <a
-                    href={record.original_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 underline"
-                >
-                    {record.short_code}
-                </a>
-            ),
+            render: (_: any, record: any) => {
+                return (
+                    <a
+                        href={`${url}/${record.short_code}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 underline"
+                    >
+                        {record.short_code}
+                    </a>
+                );
+            },
         },
+
         {
             title: 'Original URL',
             dataIndex: 'original_url',
@@ -115,7 +157,7 @@ const Shortener = () => {
                     >
                         {original_url}
                     </a>
-                    
+
 
                 </div>
             ),
@@ -131,7 +173,7 @@ const Shortener = () => {
                         type="text"
                         title="Copiar URL"
                     >
-                        
+
                     </Button>
 
                     <Button
@@ -165,13 +207,13 @@ const Shortener = () => {
                         label=""
                         rules={[
                             { required: true, message: 'Por favor ingresa una URL' },
-                            { type: 'url', message: 'Debe ser una URL válida' },
+                            // { type: 'url', message: 'Debe ser una URL válida' },
                         ]}
                     >
-                         
-                        <Input prefix={<LinkOutlined style={{ color: 'rgba(0,0,0,.25)' }} />} 
-                                suffix={<EnterOutlined className='border p-1 rounded shadow-md shadow-gray-200' style={{ color: 'rgba(0,0,0,.25)' }} />}                                
-                            allowClear className='!w-full h-14' 
+
+                        <Input prefix={<LinkOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
+                            suffix={<EnterOutlined className='border p-1 rounded shadow-md shadow-gray-200' style={{ color: 'rgba(0,0,0,.25)' }} />}
+                            allowClear className='!w-full h-14'
                             placeholder="Ingresa la URL para acortar" />
                     </Form.Item>
                     <Form.Item>
@@ -212,7 +254,7 @@ const Shortener = () => {
             <div className="mt-8">
                 <h2 className="text-lg font-semibold text-gray-700 mb-2 ml-4">Últimas urls Acortadas</h2>
                 <Table
-                className='w-full min-w-[300px] md:min-w-[850px] md:max-w-[850px]  '
+                    className='w-full min-w-[300px] md:min-w-[850px] md:max-w-[850px]  '
                     dataSource={urlList}
                     columns={columns}
                     rowKey="id" // Usar `id` como clave única para cada fila

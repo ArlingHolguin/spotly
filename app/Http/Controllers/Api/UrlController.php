@@ -4,6 +4,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UrlRequest;
+use App\Http\Resources\UrlResource;
 use App\Models\Url;
 use App\Models\User;
 use App\Traits\ShortCodeGenerator;
@@ -77,20 +79,16 @@ class UrlController extends Controller
 
             if ($user->role === 'admin') {
                 $urls = Url::orderBy('created_at', 'desc')->paginate(15);
-                return response()->json(['data' => $urls], 200);
+                return UrlResource::collection($urls);
             }
 
             $urls = Url::where('user_id', $user->id)->orderBy('created_at', 'desc')->paginate(15);
-            return response()->json(['data' => $urls], 200);
+            return UrlResource::collection($urls);
         }
 
         $urls = Url::whereNull('user_id')->orderBy('created_at', 'desc')->take(10)->get();
-        return response()->json(['data' => $urls], 200);
+        return UrlResource::collection($urls);
     }
-
-    
-
-
     /**
      * Crear una nueva URL acortada
      * 
@@ -119,20 +117,9 @@ class UrlController extends Controller
      */
 
 
-    public function store(Request $request)
+    public function store(UrlRequest $request)
     {
-        $validated = $request->validate([
-            'original_url' => 'required|url|max:2048',
-        ]);
-
-        if (Str::startsWith($validated['original_url'], 'javascript:')) {
-            abort(400, 'URL no válida.');
-        }
-
-        if ($request->input('honeypot') !== null) {
-            abort(400, 'Detección de bot.');
-        }
-
+        $validated = $request->validated();
         $userId = $this->getUserIdFromToken($request->bearerToken());
 
         $url = Url::create([
@@ -142,29 +129,8 @@ class UrlController extends Controller
             'expires_at' => $userId ? null : now()->addDays(30),
         ]);
 
-        return response()->json(['data' => $url], 201);
+        return new UrlResource($url);
     }
-
-
-
-
-    public function show($short_code)
-    {
-        // Buscar la URL por su código corto
-        $url = Url::where('short_code', $short_code)->firstOrFail();
-
-        // Verificar si la URL está activa y no ha expirado
-        if (!$url->is_active || ($url->expires_at && now()->greaterThan($url->expires_at))) {
-            return response()->json(['message' => 'La URL ha expirado o no está activa'], 410); // HTTP 410 Gone
-        }
-
-        // Incrementar el conteo de clics
-        $url->increment('clicks');
-
-        // Redireccionar a la URL original
-        return redirect($url->original_url);
-    }
-
 
     /**
      * Update the specified resource in storage.
@@ -193,11 +159,10 @@ class UrlController extends Controller
         // Actualizar la URL
         $url->update(['original_url' => $validated['original_url']]);
 
-        return response()->json(['message' => 'URL actualizada correctamente', 'data' => $url], 200);
+        return new UrlResource($url);
     }
 
-
-    /**
+       /**
      * Eliminar una URL acortada
      * 
      * @OA\Delete(
@@ -240,7 +205,7 @@ class UrlController extends Controller
         $url = Url::where('short_code', $short_code)->firstOrFail();
 
         // Obtener el ID del usuario autenticado
-        $userId = $this->getUserIdFromToken($request->bearerToken());
+        // $userId = $this->getUserIdFromToken($request->bearerToken());
 
         // Validar si el usuario es el dueño de la URL
         // if ($url->user_id !== $userId) {

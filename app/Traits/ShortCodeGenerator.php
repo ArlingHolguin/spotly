@@ -7,38 +7,46 @@ use Exception;
 
 trait ShortCodeGenerator
 {
+    /**
+     * Genera un código corto basado en una longitud mínima y máxima.
+     *
+     * @param int $minLength Longitud mínima del código.
+     * @param int $maxLength Longitud máxima del código.
+     * @return string
+     */
     protected function generateShortCode($minLength = 4, $maxLength = 8)
     {
-        $alphabet = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789';
-        $salt = config('app.key');
-        $hashids = new Hashids($salt, $minLength, $alphabet);
+        $length = random_int($minLength, $maxLength); // Longitud aleatoria dentro del rango
+        $randomString = bin2hex(random_bytes(ceil($length / 2))); // Genera bytes aleatorios
 
-        $randomNumber = random_int(1, 9999999);
-        $shortCode = $hashids->encode($randomNumber);
-
-        while (strlen($shortCode) > $maxLength) {
-            $randomNumber = random_int(1, 9999999);
-            $shortCode = $hashids->encode($randomNumber);
-        }
-
-        return $shortCode;
+        return substr($randomString, 0, $length); // Ajusta la longitud al valor exacto
     }
 
+    /**
+     * Genera un código único garantizado verificando en la base de datos.
+     *
+     * @param int $minLength Longitud mínima del código.
+     * @param int $maxLength Longitud máxima del código.
+     * @return string
+     * @throws Exception Si no se puede generar un código único después de varios intentos.
+     */
     protected function generateUniqueShortCode($minLength = 4, $maxLength = 8)
     {
         $attempts = 0;
-        $maxAttempts = 100; // Límite para evitar bucles infinitos
+        $maxAttempts = 10; // Limitar a un número razonable de intentos
 
-        do {
+        while ($attempts < $maxAttempts) {
             $shortCode = $this->generateShortCode($minLength, $maxLength);
-            $attempts++;
 
-            // Si los intentos superan el límite, lanzar una excepción
-            if ($attempts > $maxAttempts) {
-                throw new Exception('No se pudo generar un código único después de varios intentos.');
+            // Verifica si el código ya existe en la base de datos
+            if (!\App\Models\Url::where('short_code', $shortCode)->exists()) {
+                return $shortCode; // Devuelve el código único
             }
-        } while (\App\Models\Url::where('short_code', $shortCode)->exists());
 
-        return $shortCode;
+            $attempts++;
+        }
+
+        // Lanza una excepción si no se encuentra un código único
+        throw new Exception('No se pudo generar un código único después de varios intentos.');
     }
 }
